@@ -1,8 +1,8 @@
 {
   "bind_addr": "{{ hostvars[inventory_hostname_short]['ansible_' ~ consul_bind_interface]['ipv4']['address'] }}",
   "bootstrap_expect": 3,
-  "data_dir": "/opt/consul",
-  "log_level": "INFO",
+  "data_dir": "{{ consul_install_dir }}",
+  "log_level": "{{ consul_log_level }}",
   "node_name": "{{ inventory_hostname }}",
   "server": true
 }

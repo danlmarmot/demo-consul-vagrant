@@ -1,7 +1,7 @@
 [program:consul]
 command=consul agent -config-file /etc/consul.d/consul.conf
-directory=/opt/consul
+directory={{ consul_install_dir }}
 autostart=true
 autorestart=true
-stdout_logfile=/opt/consul/consul.log
+stdout_logfile={{ consul_install_dir }}/consul.log
 redirect_stderr=true
