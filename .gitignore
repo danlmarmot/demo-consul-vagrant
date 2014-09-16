@@ -3,3 +3,4 @@
 shared/installers/*
 !shared/installers/.empty
 foofoo
+.DS_Store
