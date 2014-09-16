@@ -20,9 +20,9 @@ To get rid of the Vagrant VMs and start new, use `vagrant destroy`
 
 ### What's all included?
 
-- Consul and Consul UI.
-- DNSMasq.  This is included to resolve names that end in *.consul by passing such DNS requests off to Consul for resolution--for example, "dig consul.service.consul"
-- Supervisord.  This is a process manager.  Supervisor is used to start and stop Consul as a long-running process.
+- [Consul](http://consul.io) and Consul UI.
+- [DNSMasq](http://www.thekelleys.org.uk/dnsmasq/doc.html).  This is included to resolve names that end in *.consul by passing such DNS requests off to Consul for resolution--for example, "dig consul.service.consul"
+- [Supervisord](http://supervisord.org/).  This is a process manager.  Supervisor is used to start and stop Consul as a long-running process.
  
     
 ### Using Consul UI
