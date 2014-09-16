@@ -1,5 +1,5 @@
 .idea
 .vagrant
-!.empty
-shared/installers/
+shared/installers/*
+!shared/installers/.empty
 foofoo
