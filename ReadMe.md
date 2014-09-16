@@ -9,7 +9,7 @@ Versions used:
 
 Install Vagrant and VirtualBox
 Install Ansible.  (note that Ansible needs a Mac OS X or Linux host)
-Clone this repo
+Clone this repo with git and change into the cloned directory.
 Type the command `vagrant up`
     
 Vagrant will create three VMs, then run Ansible to provision Consul on each of them.  It takes about four to five minutes to initially provision the cluster.
