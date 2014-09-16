@@ -1,0 +1,7 @@
+[program:consul]
+command=consul agent -config-file /etc/consul.d/consul.conf
+directory=/opt/consul
+autostart=true
+autorestart=true
+stdout_logfile=/opt/consul/consul.log
+redirect_stderr=true

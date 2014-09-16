@@ -1,0 +1,2 @@
+#!/bin/bash
+consul join{% for i in consul_server_ips | default(" ") %} {{ i }}{% endfor %}

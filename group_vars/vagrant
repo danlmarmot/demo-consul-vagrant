@@ -1,0 +1,26 @@
+---
+# The name of this group for Ansible to manage
+group_name: vagrant
+
+
+#----------------------------------------------------------------------------
+# Vagrant specific settings
+#----------------------------------------------------------------------------
+
+ansible_ssh_user: vagrant
+ansible_ssh_private_key_file: ~/.vagrant.d/insecure_private_key
+
+#------------------------------------------------------------------
+# Consul
+
+# For Consul on Vagrant, bind on eth1 interface
+consul_bind_interface: eth1
+
+# Make sure thise match the machine private network IP addresses in your Vagrantfile
+# Those lines look like this:
+# db0.vm.network "private_network", ip: "10.10.10.10"
+
+consul_server_ips:
+    - 10.10.10.10
+    - 10.10.10.11
+    - 10.10.10.12

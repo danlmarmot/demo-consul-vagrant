@@ -1,0 +1,46 @@
+---
+# Used to speed up Vagrant-based installs by copying packages locally
+# Installs packages from a synced Vagrant folder
+# Assumes amd64 packages
+# Files will be copied to your Vagrant shared installers folder if not present
+
+
+#- name: Download Consul for replicaset discovery
+#  get_url: >
+#    url=https://dl.bintray.com/mitchellh/consul/0.3.0_linux_amd64.zip
+#    dest=/tmp/consul.zip
+#
+## Note the copy=false--which feels backward, and means "don't copy file from this Ansible host to the remote"
+#- name: Extract Consul
+#  command: unzip -qo /tmp/consul.zip -d /usr/local/bin
+
+- name: Set consul download filename (Vagrant with Debian)
+  set_fact:
+    consul_installer_filename: "{{ consul_version }}_linux_amd64.zip"
+
+#####
+#  Debian specific install stuff
+#####
+
+# Ensure consul installer is local
+- name: Check for consul Debian installer (Vagrant with Debian)
+  stat: path=/home/vagrant/shared/installers/{{ consul_version }}_linux_amd64.zip}}
+  register: consul_installer_filepath
+  #when: ansible_os_family == "Debian"
+
+- name: Get consul installer if not present (Vagrant with Debian)
+  get_url: >
+    url={{ consul_installer_url_base }}/{{ consul_installer_filename }}
+    dest=/home/vagrant/shared/installers/{{ consul_installer_filename }}
+  when: consul_installer_filepath.stat.exists == false and ansible_os_family == "Debian"
+
+#####
+#  Redhat specific install stuff
+#####
+
+#- name: Extract Consul
+#  command: unzip -qo /tmp/consul.zip -d /usr/local/bin
+
+- name: Extract consul
+  command: unzip -qo /home/vagrant/shared/installers/{{ consul_installer_filename }} -d /usr/local/bin
+  when: consul_prev_install.stat.exists == false

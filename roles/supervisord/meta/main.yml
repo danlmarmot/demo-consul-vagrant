@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  author: "Daniel McKean"
+  license: BSD
+  min_ansible_version: 1.6
+  platforms:
+  - name: Ubuntu
+    versions:
+    - trusty
+  categories:
+  - system
+dependencies: []

@@ -1,0 +1,61 @@
+---
+# Used to speed up Vagrant-based installs by copying packages locally
+# Files will be copied to your Vagrant shared/installers folder if not present
+
+- name: Check for consul ui installer (Vagrant)
+  stat: path=/home/vagrant/shared/installers/{{ consul_web_ui_installer_filename }}
+  register: consul_ui_installer_filepath
+
+- name: Get consul ui installer if not present (Vagrant)
+  get_url: >
+    url={{ consul_installer_url_base }}/{{ consul_web_ui_installer_filename }}
+    dest=/home/vagrant/shared/installers/{{ consul_web_ui_installer_filename }}
+  when: consul_ui_installer_filepath.stat.exists == false
+
+- name: Extract consul ui
+  command: unzip -qo /home/vagrant/shared/installers/{{ consul_web_ui_installer_filename }} -d {{ consul_install_dir }}
+
+- name: Remove existing UI folder ui
+  command: rm -rf {{ consul_ui_install_dir }}
+
+- name: Move consul ui into a directory named ui
+  command: mv {{ consul_install_dir }}/dist {{ consul_ui_install_dir }}
+
+#- name: Replace exisiting Supervisor file for consul
+#  template: >
+#    src=consul-with-ui-supervisor.conf.j2
+#    dest=/etc/supervisor/conf.d/consul-supervisor.conf
+#    owner=root
+#    group=root
+#    mode=644
+
+- name: Copy new consul conf file with ui enabled
+  template: >
+    src=consul-ui.conf.j2
+    dest=/etc/consul.d/consul.conf
+
+- name: Reread supervisor config for consul ui
+  command: supervisorctl reread
+
+#Note: this does not work to reload consul with the ui, need to restart the process
+#- name: Reload consul config for consul ui
+#  command: consul reload
+
+- name: Restart consul with supervisor
+  command: supervisorctl restart consul
+
+- name: Verify consul with ui is running in supervisor
+  command: sup status consul
+  register: result
+  until:
+    - "'RUNNING' in result.stdout"
+  delay: 15
+  retries: 20
+
+- name: Verify consul ui appears
+  command: curl 127.0.0.1:{{ consul_http_port }}/ui/
+  register: result
+  until:
+    - "'<!DOCTYPE html>' in result.stdout"
+  delay: 15
+  retries: 20

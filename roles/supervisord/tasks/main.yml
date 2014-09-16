@@ -1,0 +1,52 @@
+---
+# tasks file for supervisord
+
+#######
+#  Debian package installs
+#######
+
+- name: Update apt-cache if older than two hours (Debian)
+  apt: update_cache=yes cache_valid_time=7200
+  when: ansible_os_family == 'Debian'
+
+- name: Install default packages (Debian)
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - python-pip
+  when: ansible_os_family == 'Debian'
+
+
+#######
+#  Configure supervisor
+#######
+
+- name: Install supervisord
+  pip: name=supervisor version={{ supervisord_version }}
+
+- name: Install crashmail (from superlance pip package)
+  pip: name=superlance
+
+- name: Add a supervisor group
+  group: name=supervisor state=present
+
+- name: Add current user ({{ ansible_ssh_user }}) to supervisor group
+  user: name={{ ansible_ssh_user }} groups=supervisor append=yes
+
+- name: Add supervisord.conf
+  template: src=supervisord.conf.j2 dest=/etc/supervisord.conf owner=root group=supervisor mode=644
+  notify: restart supervisord
+
+- name: Create /etc/supervisor/conf.d directory
+  file: path=/etc/supervisor/conf.d state=directory
+
+- name: Symlink supervisorctl to sup
+  file: >
+    src=/usr/local/bin/supervisorctl
+    dest=/usr/bin/sup
+    state=link
+
+- name: Add an upstart job for supervisord
+  copy: >
+    src=upstart-supervisord.conf
+    dest=/etc/init/supervisord.conf owner=root group=root mode=644
+  notify: restart supervisord

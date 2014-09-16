@@ -1,0 +1,18 @@
+---
+
+#------------------------------------------------------------------
+# Consul
+
+consul_installer_url_base: https://dl.bintray.com/mitchellh/consul
+consul_version: 0.4.0
+consul_install_dir: /opt/consul
+consul_log_level: INFO
+
+consul_bind_interface: eth0
+consul_dns_port: 8600
+consul_http_port: 8500
+consul_rpc_port: 8400
+
+install_consul_ui: true
+consul_web_ui_installer_filename: "{{ consul_version }}_web_ui.zip"
+consul_ui_install_dir: /opt/consul/ui

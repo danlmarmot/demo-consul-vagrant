@@ -1,0 +1,146 @@
+---
+# tasks file for consul
+
+# Look for the shared_folder variable for Vagrant-based installs
+- name: Look for Vagrant shared folder
+  stat: path=/home/vagrant/shared/installers/
+  register: shared_folder
+
+
+#######
+#  Determine if we should install
+#######
+
+- name: Default to installing consul
+  set_fact:
+    consul_install_flag: true
+
+- name: Look for previous consul install
+  stat: path=/usr/local/bin/consul
+  register: consul_prev_install
+
+- name: If previous consul install, get version
+  command: consul --version
+  when: consul_prev_install.stat.exists
+  register: consul_prev_version_cmd
+
+- name: If previous install, set version fact
+  set_fact:
+    consul_prev_version: '{{ consul_prev_version_cmd.stdout | regex_replace("^.+v(\d+\.\d+\.\d+?)(.|\n)*$", "\\1") }}'
+  when: consul_prev_install.stat.exists and consul_prev_version_cmd is defined
+
+- name: Do not install consul if previously installed
+  set_fact:
+    consul_install_flag: false
+  when: consul_prev_version_cmd is defined and consul_prev_version == consul_version
+
+
+#######
+#  Debian package installs
+#######
+
+- name: Update apt-cache if older than two hours (Debian)
+  apt: update_cache=yes cache_valid_time=7200
+  when: ansible_os_family == 'Debian' and consul_install_flag == true
+
+- name: Install default packages (Debian)
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - unzip
+    - dnsmasq
+  when: ansible_os_family == 'Debian' and consul_install_flag == true
+
+
+#######
+#  Configure dnsmasq
+#######
+
+- name: Create the /etc/dnsmasq.d directory
+  file: path=/etc/dnsmasq.d/ state=directory
+
+- name: Add dnsmasq configuration
+  template: >
+    src=10-dnsmasq-consul.conf.j2
+    dest=/etc/dnsmasq.d/10-dnsmasq-consul.conf
+
+- name: Restart dnsmasq
+  service: name=dnsmasq state=restarted
+
+
+#####
+#  Install Consul
+#####
+
+# For Vagrant environments
+- include: install-consul-from-shared-dir.yml
+  when: shared_folder.stat.exists and consul_install_flag == true
+
+# For non-Vagrant environments
+#- include: install-consul-from-web.yml
+#  when: shared_folder.stat.exists == false and consul_install_flag == true
+
+- name: Verify consul install
+  command: consul --version
+  register: consul_version_cmd
+
+- name: Verify consul version {{consul_version}} is installed
+  assert:
+    that:
+      - "'Consul v{{ consul_version }}' in consul_version_cmd.stdout"
+
+- name: Ensure consul data_dir exists (specified in consul.conf file)
+  file: path={{ consul_install_dir }} state=directory owner={{ ansible_ssh_user }} group={{ ansible_ssh_user }}
+
+- name: Ensure consul.d dir exists
+  file: path=/etc/consul.d state=directory
+
+- name: Add consul config file
+  template: >
+    src=consul.conf.j2
+    dest=/etc/consul.d/consul.conf
+
+- name: Copy supervisor conf file for consul
+  template: >
+    src=consul-supervisor.conf.j2
+    dest=/etc/supervisor/conf.d/consul-supervisor.conf
+    owner=root
+    group=root
+    mode=644
+
+- name: Restart supervisord
+  service: name=supervisord state=restarted
+
+- name: Restart service via supervisor
+  command: supervisorctl restart consul
+
+- name: Verify consul is running in supervisor
+  command: sup status consul
+  register: result
+  until:
+    - "'RUNNING' in result.stdout"
+  delay: 15
+  retries: 20
+
+- name: Copy consul join script
+  template: >
+    src=consul_join.sh.j2
+    dest={{ consul_install_dir }}/consul_join.sh
+    owner={{ ansible_ssh_user }}
+    group={{ ansible_ssh_user }}
+    mode=755
+
+- name: Run consul join script.  Do as shell.
+  shell: "{{ consul_install_dir }}/consul_join.sh"
+
+- name: Verify dig output
+  command: dig consul.service.consul
+  register: result
+  until:
+    - "';; ANSWER SECTION:' in result.stdout"
+    - "'{{ consul_server_ips[0] }}' in result.stdout"
+  delay: 15
+  retries: 20
+
+- name: Install Consul UI
+  include: install-consul-ui-from-shared-dir.yml
+  when:  shared_folder.stat.exists and install_consul_ui == true
