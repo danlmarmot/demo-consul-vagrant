@@ -1,5 +1,5 @@
 [program:consul]
-command=consul agent -config-file /etc/consul.d/consul.conf
+command=consul agent -config-file /etc/consul.d/consul.conf -config-dir /etc/consul.d
 directory={{ consul_install_dir }}
 autostart=true
 autorestart=true
